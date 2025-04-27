@@ -4604,6 +4604,15 @@ const        minEnablements=  {
 
   '%ErrorPrototype%': {
     name: true  // set by "precond", "ava", "node-fetch"
+},
+// MonkeyPatch for https://github.com/endojs/endo/pull/1969
+'%IteratorPrototype%': {
+  toString: true,
+  // https://github.com/tc39/proposal-iterator-helpers
+  constructor: true,
+  // https://github.com/tc39/proposal-iterator-helpers
+  // [toStringTagSymbol]: true,
+  [Symbol.toStringTag]: true,
 }};
 
 
@@ -4682,6 +4691,12 @@ const        moderateEnablements=  {
 
 
   '%IteratorPrototype%': {
+    // MonkeyPatch for https://github.com/endojs/endo/pull/1969
+    // https://github.com/tc39/proposal-iterator-helpers
+    constructor: true,
+    // https://github.com/tc39/proposal-iterator-helpers
+    // [toStringTagSymbol]: true,
+    [Symbol.toStringTag]: true,
     toString: true}};
 
 
@@ -4907,7 +4922,8 @@ function                enablePropertyOverrides(
    }
 
   function enableProperties(path, obj, plan) {
-    for( const prop of getOwnPropertyNames(plan)) {
+    // MonkeyPatch for https://github.com/endojs/endo/pull/1969
+    for( const prop of ownKeys(plan)) {
       const desc=  getOwnPropertyDescriptor(obj, prop);
       if( !desc||  desc.get||  desc.set) {
         // No not a value property, nothing to do.
@@ -9821,6 +9837,149 @@ const        repairIntrinsics=  (options=  {})=>  {
 
   // Replace *Locale* methods with their non-locale equivalents
   tameLocaleMethods(intrinsics, localeTaming);
+
+
+  // MonkeyPatch for https://github.com/endojs/endo/pull/1969
+
+  // import {
+  // getOwnPropertyDescriptor,
+  // apply,
+  // defineProperty,
+  // toStringTagSymbol,
+  // } from './commons.js';
+  const { getOwnPropertyDescriptor, defineProperty } = Object;
+  const { apply } = Reflect;
+  const { toStringTag: toStringTagSymbol } = Symbol;
+
+const throws = thunk => {
+  try {
+    thunk();
+  } catch (er) {
+    return true;
+  }
+  return false;
+};
+const tameFauxDataProperty = (obj, prop, expectedValue) => {
+  if (obj === undefined) {
+    // The object does not exist in this version of the platform
+    return false;
+  }
+  const desc = getOwnPropertyDescriptor(obj, prop);
+  if (!desc || 'value' in desc) {
+    // The property either doesn't exist, or is already an actual data property.
+    return false;
+  }
+  const { get, set } = desc;
+  if (typeof get !== 'function') {
+    // A faux data property has both a getter and a setter
+    return false;
+  }
+  if (typeof set !== 'function') {
+    return false;
+  }
+  if (get() !== expectedValue) {
+    // The getter called by itself should produce the expectedValue
+    return false;
+  }
+  if (apply(get, obj, []) !== expectedValue) {
+    // The getter called with `this === obj` should also return the
+    // expectedValue.
+    return false;
+  }
+  const testValue = 'Seems to be a setter';
+  const subject1 = { __proto__: null };
+  apply(set, subject1, [testValue]);
+  if (subject1[prop] !== testValue) {
+    // The setter called with an unrelated object as `this` should
+    // set the property on the object.
+    return false;
+  }
+  const subject2 = { __proto__: obj };
+  apply(set, subject2, [testValue]);
+  if (subject2[prop] !== testValue) {
+    // The setter called on an object that inherits from `obj` should
+    // override the property from `obj` as if by assignment.
+    return false;
+  }
+  if (!throws(() => apply(set, obj, [expectedValue]))) {
+    // The setter called with `this === obj` should throw without having
+    // caused any effect.
+    // This is the test that has the greatest danger of leaving behind some
+    // persistent side effect. The most obvious one is to emulate a
+    // successful assignment to the property. That's why this test
+    // uses `expectedValue`, so that case is likely not to actually
+    // change anything.
+    return false;
+  }
+  if ('originalValue' in get) {
+    // The ses-shim uniquely, as far as we know, puts an `originalValue`
+    // property on the getter, so that reflect property tranversal algorithms,
+    // like `harden`, will traverse into the enulated value without
+    // calling the getter. That does not happen until `permits-intrinsics.js`
+    // which is much later. So if we see one this early, we should
+    // not assume we understand what's going on.
+    //
+    return false;
+  }
+
+  // We assume that this code runs before any untrusted code runs, so
+  // we do not need to worry about the above conditions passing because of
+  // malicious intent. In fact, it runs even before vetted shims are supposed
+  // to run, between repair and hardening. Given that, after all these tests
+  // pass, we have adequately validated that the property in question is
+  // an accessor function whose purpose is suppressing the override mistake,
+  // i.e., enabling a non-writable property to be overridden by assignment.
+  // In that case, here we *temporarily* turn it into the data property
+  // it seems to emulate, but writable so that it does not trigger the
+  // override mistake while in this temporary state.
+
+  // For those properties that are also listed in `enablements.js`,
+  // that phase will re-enable override for these properties, but
+  // via accessor functions that ses controls, so we know what they are
+  // doing. In addition, the getter functions installed by
+  // `enable-property-overrides.js` have an `originalValue` field
+  // enabling meta-traversal code like harden to visit the original value
+  // without calling the getter.
+
+  if (desc.configurable === false) {
+    // Even though it seems to be a faux data property, we're unable to fix it.
+    return false;
+  }
+
+  // Many of the `return false;` cases above plausibly should be turned into
+  // errors, or an least generate warnings. However, for those, the checks
+  // following this phase are likely to signal an error anyway.
+
+  // At this point, we have passed all our sniff checks for validating that
+  // it seems to be a faux data property with the expected value. Turn
+  // it into the actual data property it emulates, but writable so there is
+  // not yet an override mistake problem.
+
+  defineProperty(obj, prop, {
+    value: expectedValue,
+    writable: true,
+    enumerable: desc.enumerable,
+    configurable: true,
+  });
+
+  return true;
+};
+const tameFauxDataProperties = intrinsics => {
+  // https://github.com/tc39/proposal-iterator-helpers
+  tameFauxDataProperty(
+    intrinsics['%IteratorPrototype%'],
+    'constructor',
+    intrinsics.Iterator,
+  );
+  // https://github.com/tc39/proposal-iterator-helpers
+  tameFauxDataProperty(
+    intrinsics['%IteratorPrototype%'],
+    toStringTagSymbol,
+    'Iterator',
+  );
+};
+
+tameFauxDataProperties(intrinsics);
 
   /**
    * 2. WHITELIST to standardize the environment.
