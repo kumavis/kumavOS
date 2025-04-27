@@ -26,7 +26,7 @@ type ModuleLookupMessage = RpcMessage & {
 const textDecoder = new TextDecoder();
 
 const Browser: FC<ComponentProcessProps> = (props) => {
-  const libs = ["https://npmfs.com/download/ses/0.18.8/dist/ses.cjs"];
+  const libs = ["https://npmfs.com/download/ses/1.12.0/dist/ses.cjs"];
   const runtime = `
     // lockdown()
     ${endoRuntime as string}
