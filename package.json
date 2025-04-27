@@ -83,6 +83,7 @@
   "devDependencies": {
     "7z-wasm": "^1.0.2",
     "@axe-core/playwright": "^4.7.3",
+    "@lavamoat/allow-scripts": "^3.3.2",
     "@lavamoat/preinstall-always-fail": "^2.1.0",
     "@next/bundle-analyzer": "^13.5.3",
     "@next/eslint-plugin-next": "^13.5.3",
