@@ -4,11 +4,6 @@ doc
 *.DS_Store
 *.log
 !tsconfig.json
-test/fixtures
-test/harness/load_fixtures.ts
-test/harness/factories/workerfs_worker.js*
-!test/fixtures/files
-!test/fixtures/README.md
 tscommand*
 tools/*.js*
 build
