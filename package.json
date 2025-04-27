@@ -12,6 +12,7 @@
     "defaults and supports es6 and not ie 11 and >1%"
   ],
   "scripts": {
+    "setup": "yarn install && allow-scripts",
     "build": "yarn build:prebuild && next build",
     "build:bundle-analyzer": "yarn build",
     "build:fs": "node scripts/fs2json.js --exclude .index --out public/.index/fs.9p.json ./public && node scripts/preloadIcons.js",
@@ -143,7 +144,7 @@
   "packageManager": "yarn@4.9.1",
   "lavamoat": {
     "allowScripts": {
-      "pdfjs-dist>canvas": false,
+      "pdfjs-dist>canvas": true,
       "wasi-js": false,
       "webamp>milkdrop-preset-converter-aws>babel-runtime>core-js": false,
       "@lavamoat/preinstall-always-fail": false,
