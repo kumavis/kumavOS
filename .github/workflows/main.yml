@@ -17,7 +17,9 @@ jobs:
         with:
           node-version: 20
       - name: Install Dependencies
-        run: yarn run setup
+        run: yarn install
+      - name: Run Dependency Lifecycle Scripts
+        run: yarn exec allow-scripts
       - name: Run Jest Unit Tests
         run: yarn test
       - name: Build App
