@@ -3,10 +3,15 @@ import type { ComponentProcessProps } from "components/system/Apps/RenderCompone
 import { useProcesses } from "contexts/process";
 import { MessageEventHandler } from "hooks/usePostMessage";
 import { useCallback, type FC } from "react";
+// @ts-expect-error .raw is fine
 import WorkerEnvSource from "./dist/dist-worker-env-bundle.js.raw";
 import { HelloPortMessage, RpcMessage } from "./util";
 /* eslint-disable-next-line @typescript-eslint/ban-ts-comment */
 // @ts-ignore
+
+// TODO: make this configurable
+// Cat Wallet acts as the host, which is checked by the file path
+const OCAP_WALLET_PATH = "/Users/Public/Documents/Endo/Ocap Runtime/cat-wallet.ocaps";
 
 // no SSR
 let daemonWebWorker: Worker;
@@ -37,7 +42,7 @@ const Browser: FC<ComponentProcessProps> = (props) => {
       if (message.type === "HELLO_PORT") {
         const port = event.ports[0];
         const appId =
-          url === "/Users/Public/Start Menu/Endo/cat-wallet.ocaps"
+          url === OCAP_WALLET_PATH
             ? "HOST"
             : url;
         const helloPortMessage: HelloPortMessage = {
