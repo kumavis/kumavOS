@@ -3,6 +3,7 @@
 certificates
 out
 
+.yarn
 node_modules
 
 test-results
@@ -31,3 +32,5 @@ public/.index/*
 !public/Users/Public/Start Menu/Games/Quake III Arena.url
 !public/Users/Public/Start Menu/Games/Space Cadet.url
 !public/Users/Public/Videos
+
+.DS_Store

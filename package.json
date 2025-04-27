@@ -1,11 +1,11 @@
 {
-  "name": "daedalos",
+  "name": "kumavOS",
   "version": "2.0.0",
   "description": "Desktop environment in the browser",
   "author": {
-    "name": "Dustin Brett",
-    "email": "dustinbrett@gmail.com",
-    "url": "https://dustinbrett.com"
+    "name": "kumavis",
+    "email": "aaron@kumavis.me",
+    "url": "https://os.kumavis.me"
   },
   "license": "MIT",
   "browserslist": [
@@ -49,7 +49,7 @@
     "@wasmer/wasm-terminal": "^0.12.0",
     "@wasmer/wasm-transformer": "^0.12.0",
     "ani-cursor": "^0.0.5",
-    "browserfs": "https://github.com/jvilk/BrowserFS.git#a96aa2d",
+    "browserfs": "workspace:^",
     "butterchurn-presets": "^3.0.0-beta.4",
     "dompurify": "^3.0.5",
     "fflate": "^0.8.1",
@@ -82,6 +82,7 @@
   "devDependencies": {
     "7z-wasm": "^1.0.2",
     "@axe-core/playwright": "^4.7.3",
+    "@lavamoat/preinstall-always-fail": "^2.1.0",
     "@next/bundle-analyzer": "^13.5.3",
     "@next/eslint-plugin-next": "^13.5.3",
     "@playwright/test": "^1.38.1",
@@ -139,5 +140,17 @@
     "xlsx": "^0.18.5",
     "xterm": "^5.3.0"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "packageManager": "yarn@4.9.1",
+  "lavamoat": {
+    "allowScripts": {
+      "pdfjs-dist>canvas": false,
+      "wasi-js": false,
+      "webamp>milkdrop-preset-converter-aws>babel-runtime>core-js": false,
+      "@lavamoat/preinstall-always-fail": false,
+      "eslint-config-next>eslint-import-resolver-typescript>unrs-resolver": false
+    }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
