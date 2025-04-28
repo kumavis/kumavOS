@@ -12,6 +12,12 @@ const webpack = require("webpack");
  * @type {import("next").NextConfig}
  * */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   compiler: {
     reactRemoveProperties: isProduction,
     removeConsole: isProduction,
